@@ -10,3 +10,4 @@ Warning: The code is only sparsely commented. Shame on me.
 --
 
 Forked by Pierre and heavily modified. The code now no longer drives a plotter but creates an SVG with the result.
+![Screenshot](https://raw.githubusercontent.com/PiAir/SymbolicDisarray/master/symbolic01.png)
