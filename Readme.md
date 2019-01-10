@@ -6,3 +6,7 @@ http://www.tobiastoft.com/posts/an-intro-to-pen-plotters
 (scroll half way down the page)
 
 Warning: The code is only sparsely commented. Shame on me.
+
+--
+
+Forked by Pierre and heavily modified. The code now no longer drives a plotter but creates an SVG with the result.
