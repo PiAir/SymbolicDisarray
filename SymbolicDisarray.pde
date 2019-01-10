@@ -1,78 +1,49 @@
-import processing.serial.*;
+import processing.svg.*;               // library for SVG export
 
-Serial myPort;    // Create object from Serial class
-Plotter plotter;  // Create a plotter object
 int val;          // Data received from the serial port
 int lf = 10;      // ASCII linefeed
-
-//Enable plotting?
-final boolean PLOTTING_ENABLED = true;
 
 //Label
 String label = "SYMBOLIC DISARRAY";
 
 //Plotter dimensions
-int xMin = 170;
-int yMin = 602;
-int xMax = 15370;
-int yMax = 10602;
+int xMin = 0;
+int yMin = 0;
+int xMax = 600;
+int yMax = 800;
+
+float startX = 20; //offset
+float startY = 30;
+float symbolW = 40;
+float spaceH = 40;  //spacing
+float spaceW = 40;
 
 //Current rows and cols
 int row = 0;
 int col = 0;
 
+int cols = int((xMax - 2*startY) / spaceW); //Total cols. Current column is stored in 'col'
+int rows = int((yMax - 2*startX - 40) / spaceH); //Total rows. Current row is stored in 'row'
 
 //Let's set this up
 void setup(){
-  background(233, 233, 220);
-  size(1537, 1060);
-  smooth();
+  size(600, 800, SVG, "symbolic01.svg");
   
-  //Select a serial port
-  println(Serial.list()); //Print all serial ports to the console
-  String portName = Serial.list()[4]; //make sure you pick the right one
-  println("Plotting to port: " + portName);
-  
-  //Open the port
-  myPort = new Serial(this, portName, 9600);
-  myPort.bufferUntil(lf);
-  
-  //Associate with a plotter object
-  plotter = new Plotter(myPort);
-  
-  //Initialize plotter
-  plotter.write("IN;SP1;");
-  
-  //Draw a label first (this is pretty cool to watch)
-  float ty = map(80, 0, height, yMin, yMax);
-  plotter.write("PU"+xMax+","+ty+";"); //Position pen
-  plotter.write("SI0.14,0.14;DI0,1;LB" + label + char(3)); //Draw label
-  
-  //Wait 0.5 second per character while printing label
-  if (PLOTTING_ENABLED) {
-    delay(label.length() * 500);
-  }
-    
+  noLoop();  
 }
 
 void draw(){
-  /* This could have been done in a more elegant way with a nested loop
-     but then we wouldn't have gotten live updating on screen while plotting */
+  background(233, 233, 220);
+  textSize(14);
+  fill(0, 0, 0);
+  text("SYMBOLIC DISARRAY",xMax-150,yMax-20); //Draw label
   
   /* Draw a grid of predefined symbols */
-  int cols = 13; //Total cols. Current column is stored in 'col'
-  int rows = 22; //Total rows. Current row is stored in 'row'
+
   
-  if (row < rows && col < cols){
-    drawSymbol(col, row);  //only draw if within bounds
-    
-    //increment for next iteration
-    if (col < cols){
-      row ++;
-      if (row >= rows){
-        col++;
-        row = 0;
-      }
+  for (int row = 0; row < rows; row++) {
+    for (int col = 0; col < cols; col++) {
+      drawSymbol(col,row);  //only draw if within bounds
     }
   }
 }
@@ -80,19 +51,16 @@ void draw(){
 void drawSymbol(int c, int r){
   float phi = 0;      //initial rotation
   
-  float startX = 100; //offset
-  float startY = 100;
-  float spaceH = 60;  //spacing
-  float spaceW = 60;
+
   
-  Symbol s = new Symbol(100, 100*phi, 100, 100, -15);  
+  Symbol s = new Symbol(100, 100*phi, 100, 100, -15);  // Ignore?
 
   //Make sure the first row is straight, then randomize
-  if (r>2){
+  if (r>1){
     phi = random(-r,r);
   }
    
-  s = new Symbol(startX+spaceW*r+phi, startY+spaceH*c+phi, 60, 60, phi);
+  s = new Symbol(startX+spaceW*r+phi, startY+spaceH*c+phi, symbolW, symbolW, phi);
   s.drawIt();
 }
 
@@ -117,19 +85,20 @@ class Symbol{
     r = radians(rot);
     
     //here's a cube, but you can make any contiguous symbol with this simple coordinate system
+  
     points.add( new PVector(1,0) );
     points.add( new PVector(1,1) );
     points.add( new PVector(0,1) );
     points.add( new PVector(0,0) );
     points.add( new PVector(1,0) );
+      /*
     
-    /*
     //here's an example of a triangle symbol
     points.add( new PVector(0,0) );
     points.add( new PVector(1,1) );
     points.add( new PVector(1,0) );
     points.add( new PVector(0,0) );
-    
+   
     //here's a chevron
     points.add( new PVector(0,0) );
     points.add( new PVector(0.5,0.5) );
@@ -155,7 +124,7 @@ class Symbol{
     points.add( new PVector(2,2) );
     points.add( new PVector(0,2) );
     points.add( new PVector(0,1) );
-    
+   
     
     //here's a simple lightning bolt shape
     w /= 7; //scale down
@@ -175,42 +144,16 @@ class Symbol{
   void drawIt(){  
     //draw shape  
     for (int i=0; i<points.size()-1; i++){
-      drawLine(
-        rotX(points.get(i).x, 
-        points.get(i).y)*w+tx, 
-        rotY(points.get(i).x, 
-        points.get(i).y)*h+ty, 
-        rotX(points.get(i+1).x, 
-        points.get(i+1).y)*w+tx, 
-        rotY(points.get(i+1).x, 
-        points.get(i+1).y)*h+ty, 
-        (i==0)
-      );
-      
-      if (i==points.size()-2){
-        plotter.write("PU;");  
-      }
+      float x1 = rotX(points.get(i).x, points.get(i).y)*w+tx;
+      float y1 = rotY(points.get(i).x, points.get(i).y)*h+ty;
+      float x2 = rotX(points.get(i+1).x, points.get(i+1).y)*w+tx;
+      float y2 = rotY(points.get(i+1).x, points.get(i+1).y)*h+ty;
+      line(y1,x1,y2,x2);
     }
 
-    if (PLOTTING_ENABLED){
-      delay(250);
-    }
   }
   
-  void drawLine(float x1, float y1, float x2, float y2, boolean up){
-    line(x1, y1, x2, y2);
-    float _x1 = map(x1, 0, width, xMin, xMax);
-    float _y1 = map(y1, 0, height, yMin, yMax);
-    
-    float _x2 = map(x2, 0, width, xMin, xMax);
-    float _y2 = map(y2, 0, height, yMin, yMax);
-    
-    String pen = "PD";
-    if (up) {pen="PU";}
-    
-    plotter.write(pen+_x1+","+_y1+";");
-    plotter.write("PD"+_x2+","+_y2+";", 75); //75 ms delay
-  }
+
   
   float rotX(float inX, float inY){
    return (inX*cos(r) - inY*sin(r)); 
@@ -218,32 +161,5 @@ class Symbol{
   
   float rotY(float inX, float inY){
    return (inX*sin(r) + inY*cos(r)); 
-  }
-}
-
-
-
-/*************************
-  Simple plotter class
-*************************/
-
-class Plotter {
-  Serial port;
-  
-  Plotter(Serial _port){
-    port = _port;
-  }
-  
-  void write(String hpgl){
-    if (PLOTTING_ENABLED){
-      port.write(hpgl);
-    }
-  }
-  
-  void write(String hpgl, int del){
-    if (PLOTTING_ENABLED){
-      port.write(hpgl);
-      delay(del);
-    }
   }
 }
