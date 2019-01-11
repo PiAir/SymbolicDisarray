@@ -1,8 +1,5 @@
 import processing.svg.*;               // library for SVG export
 
-int val;          // Data received from the serial port
-int lf = 10;      // ASCII linefeed
-
 //Label
 String label = "SYMBOLIC DISARRAY";
 
